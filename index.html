@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heart Disease Risk Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      --card-bg: rgba(30, 41, 59, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --input-bg: rgba(15, 23, 42, 0.6);
+      --input-border: rgba(255, 255, 255, 0.15);
+      --input-focus: #818cf8;
+      --risk-low: #10b981;
+      --risk-medium: #f59e0b;
+      --risk-high: #ef4444;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Compact Top Header Bar */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--card-border);
+      flex-shrink: 0;
+    }
+
+    .header-titles {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a5b4fc, #c084fc, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .api-url-input {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-main);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      width: 220px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.35rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* Main Grid Layout - Fits within 100vh */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2.2fr 1fr;
+      gap: 0.85rem;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .section-tag {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 0.4rem;
+      margin-top: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 0.2rem;
+    }
+
+    .fields-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+      width: 100%;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .form-group label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .form-group input, .form-group select {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-main);
+      padding: 0.32rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--input-focus);
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      padding: 0.6rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+    }
+
+    .submit-btn:hover {
+      opacity: 0.95;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Compact Result Panel */
+    .result-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .placeholder-state {
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .placeholder-icon {
+      font-size: 2.2rem;
+      opacity: 0.6;
+    }
+
+    .result-content {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: space-around;
+    }
+
+    .risk-badge {
+      display: inline-block;
+      padding: 0.35rem 1.1rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .risk-low {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .risk-medium {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .risk-high {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .probability-gauge {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: conic-gradient(var(--gauge-color) var(--gauge-percent), rgba(255,255,255,0.08) 0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .probability-inner {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background: #1e293b;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .prob-number {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .prob-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .details-list {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: left;
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .detail-row span:last-child {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .error-banner {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      margin-bottom: 0.4rem;
+      display: none;
+      flex-shrink: 0;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s ease-in-out infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-titles">
+      <h1>Heart Disease Risk Predictor</h1>
+      <p>FastAPI ML Inference Service</p>
+    </div>
+    <div class="top-controls">
+      <input type="text" id="api-url" class="api-url-input" value="http://localhost:8000/predict" placeholder="API Endpoint">
+      <button class="btn-secondary" type="button" onclick="loadPreset('low')">Low Risk Demo</button>
+      <button class="btn-secondary" type="button" onclick="loadPreset('high')">High Risk Demo</button>
+    </div>
+  </header>
+
+  <div id="error-box" class="error-banner"></div>
+
+  <div class="main-grid">
+    <!-- Compact Form Container -->
+    <div class="form-card">
+      <form id="prediction-form" onsubmit="handleFormSubmit(event)">
+        
+        <!-- 1. Vitals & Demographics -->
+        <div class="section-tag">👤 Demographics & Vitals</div>
+        <div class="fields-grid">
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" min="1" max="120" required>
+          </div>
+          <div class="form-group">
+            <label for="sex">Sex</label>
+            <select id="sex" name="sex" required>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="resting_bp_systolic">Systolic BP</label>
+            <input type="number" id="resting_bp_systolic" name="resting_bp_systolic" required>
+          </div>
+          <div class="form-group">
+            <label for="resting_bp_diastolic">Diastolic BP</label>
+            <input type="number" id="resting_bp_diastolic" name="resting_bp_diastolic" required>
+          </div>
+          <div class="form-group">
+            <label for="bmi">BMI</label>
+            <input type="number" id="bmi" name="bmi" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="resting_heart_rate">Resting HR</label>
+            <input type="number" id="resting_heart_rate" name="resting_heart_rate" required>
+          </div>
+        </div>
+
+        <!-- 2. Blood & Metabolic Profile -->
+        <div class="section-tag">🩸 Blood & Metabolic Metrics</div>
+        <div class="fields-grid">
+          <div class="form-group">
+            <label for="hdl">HDL (mg/dL)</label>
+            <input type="number" id="hdl" name="hdl" required>
+          </div>
+          <div class="form-group">
+            <label for="ldl">LDL (mg/dL)</label>
+            <input type="number" id="ldl" name="ldl" required>
+          </div>
+          <div class="form-group">
+            <label for="triglycerides">Triglycerides</label>
+            <input type="number" id="triglycerides" name="triglycerides" required>
+          </div>
+          <div class="form-group">
+            <label for="hba1c">HbA1c (%)</label>
+            <input type="number" id="hba1c" name="hba1c" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="st_depression">ST Depression</label>
+            <input type="number" id="st_depression" name="st_depression" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="max_heart_rate_achieved">Max HR</label>
+            <input type="number" id="max_heart_rate_achieved" name="max_heart_rate_achieved" required>
+          </div>
+        </div>
+
+        <!-- 3. Symptoms & Clinical -->
+        <div class="section-tag">🫀 Symptoms & Clinical Indicators</div>
+        <div class="fields-grid">
+          <div class="form-group">
+            <label for="chest_pain_type">Chest Pain Type</label>
+            <select id="chest_pain_type" name="chest_pain_type" required>
+              <option value="Asymptomatic">Asymptomatic</option>
+              <option value="Atypical Angina">Atypical Angina</option>
+              <option value="Typical Angina">Typical Angina</option>
+              <option value="Non-anginal Pain">Non-anginal Pain</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="exercise_induced_angina">Ex. Angina</label>
+            <select id="exercise_induced_angina" name="exercise_induced_angina" required>
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="family_history">Family Hist.</label>
+            <select id="family_history" name="family_history" required>
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="smoker_status">Smoker</label>
+            <select id="smoker_status" name="smoker_status" required>
+              <option value="Never">Never</option>
+              <option value="Former">Former</option>
+              <option value="Current">Current</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="wearable_owner">Wearable</label>
+            <select id="wearable_owner" name="wearable_owner" required>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. Lifestyle & Activity -->
+        <div class="section-tag">🏃 Lifestyle & Habits</div>
+        <div class="fields-grid">
+          <div class="form-group">
+            <label for="exercise_minutes_per_week">Ex. (mins/wk)</label>
+            <input type="number" id="exercise_minutes_per_week" name="exercise_minutes_per_week" required>
+          </div>
+          <div class="form-group">
+            <label for="daily_steps">Daily Steps</label>
+            <input type="number" id="daily_steps" name="daily_steps" required>
+          </div>
+          <div class="form-group">
+            <label for="sleep_hours">Sleep (hrs)</label>
+            <input type="number" id="sleep_hours" name="sleep_hours" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="stress_score">Stress (0-100)</label>
+            <input type="number" id="stress_score" name="stress_score" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="alcohol_units_per_week">Alcohol (u/wk)</label>
+            <input type="number" id="alcohol_units_per_week" name="alcohol_units_per_week" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="diet_quality_score">Diet (0-100)</label>
+            <input type="number" id="diet_quality_score" name="diet_quality_score" step="0.1" required>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="submit-btn">
+          <span id="btn-text">Predict Heart Disease Risk</span>
+          <div id="btn-spinner" class="spinner"></div>
+        </button>
+      </form>
+    </div>
+
+    <!-- Compact Result Output Card -->
+    <div class="result-card">
+      <div id="placeholder-state" class="placeholder-state">
+        <div class="placeholder-icon">💓</div>
+        <h4 style="font-weight:600; color:#e2e8f0;">Ready for Prediction</h4>
+        <p style="font-size:0.75rem;">Click predict to generate risk score.</p>
+      </div>
+
+      <div id="result-content" class="result-content">
+        <div id="risk-badge" class="risk-badge">Low Risk</div>
+
+        <div id="probability-gauge" class="probability-gauge">
+          <div class="probability-inner">
+            <div id="prob-number" class="prob-number">14.5%</div>
+            <div class="prob-label">Risk Score</div>
+          </div>
+        </div>
+
+        <div class="details-list">
+          <div class="detail-row">
+            <span>Outcome:</span>
+            <span id="detail-outcome">Negative (0)</span>
+          </div>
+          <div class="detail-row">
+            <span>Probability:</span>
+            <span id="detail-prob">0.1450</span>
+          </div>
+          <div class="detail-row">
+            <span>Model:</span>
+            <span id="detail-model">Random Forest</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const lowRiskPreset = {
+      age: 44,
+      sex: "Male",
+      resting_bp_systolic: 117,
+      resting_bp_diastolic: 74,
+      hdl: 57,
+      ldl: 106,
+      triglycerides: 119,
+      hba1c: 5.2,
+      bmi: 26.5,
+      resting_heart_rate: 74,
+      max_heart_rate_achieved: 165,
+      chest_pain_type: "Atypical Angina",
+      exercise_induced_angina: "false",
+      st_depression: 0.3,
+      family_history: "false",
+      smoker_status: "Never",
+      alcohol_units_per_week: 2.9,
+      exercise_minutes_per_week: 150,
+      sleep_hours: 7.5,
+      stress_score: 19.8,
+      wearable_owner: "true",
+      daily_steps: 8500,
+      diet_quality_score: 75.0
+    };
+
+    const highRiskPreset = {
+      age: 64,
+      sex: "Male",
+      resting_bp_systolic: 160,
+      resting_bp_diastolic: 98,
+      hdl: 32,
+      ldl: 185,
+      triglycerides: 240,
+      hba1c: 7.8,
+      bmi: 34.2,
+      resting_heart_rate: 88,
+      max_heart_rate_achieved: 120,
+      chest_pain_type: "Typical Angina",
+      exercise_induced_angina: "true",
+      st_depression: 2.5,
+      family_history: "true",
+      smoker_status: "Current",
+      alcohol_units_per_week: 14.0,
+      exercise_minutes_per_week: 20,
+      sleep_hours: 5.0,
+      stress_score: 82.5,
+      wearable_owner: "false",
+      daily_steps: 2500,
+      diet_quality_score: 35.0
+    };
+
+    function loadPreset(type) {
+      const data = type === 'low' ? lowRiskPreset : highRiskPreset;
+      for (const [key, val] of Object.entries(data)) {
+        const input = document.getElementById(key);
+        if (input) {
+          input.value = val;
+        }
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreset('low');
+    });
+
+    function showError(msg) {
+      const box = document.getElementById('error-box');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+
+    function hideError() {
+      const box = document.getElementById('error-box');
+      box.style.display = 'none';
+    }
+
+    async function handleFormSubmit(event) {
+      event.preventDefault();
+      hideError();
+
+      const form = document.getElementById('prediction-form');
+      const formData = new FormData(form);
+      let endpoint = document.getElementById('api-url').value.trim();
+
+      if (!endpoint) {
+        endpoint = 'http://localhost:8000/predict';
+      }
+
+      const payload = {
+        age: parseInt(formData.get('age')),
+        sex: formData.get('sex'),
+        resting_bp_systolic: parseInt(formData.get('resting_bp_systolic')),
+        resting_bp_diastolic: parseInt(formData.get('resting_bp_diastolic')),
+        hdl: parseInt(formData.get('hdl')),
+        ldl: parseInt(formData.get('ldl')),
+        triglycerides: parseInt(formData.get('triglycerides')),
+        hba1c: parseFloat(formData.get('hba1c')),
+        bmi: parseFloat(formData.get('bmi')),
+        resting_heart_rate: parseInt(formData.get('resting_heart_rate')),
+        max_heart_rate_achieved: parseInt(formData.get('max_heart_rate_achieved')),
+        chest_pain_type: formData.get('chest_pain_type'),
+        exercise_induced_angina: formData.get('exercise_induced_angina') === 'true',
+        st_depression: parseFloat(formData.get('st_depression')),
+        family_history: formData.get('family_history') === 'true',
+        smoker_status: formData.get('smoker_status'),
+        alcohol_units_per_week: parseFloat(formData.get('alcohol_units_per_week')),
+        exercise_minutes_per_week: parseInt(formData.get('exercise_minutes_per_week')),
+        sleep_hours: parseFloat(formData.get('sleep_hours')),
+        stress_score: parseFloat(formData.get('stress_score')),
+        wearable_owner: formData.get('wearable_owner') === 'true',
+        daily_steps: parseInt(formData.get('daily_steps')),
+        diet_quality_score: parseFloat(formData.get('diet_quality_score'))
+      };
+
+      const submitBtn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      submitBtn.disabled = true;
+      btnText.textContent = 'Analyzing...';
+      btnSpinner.style.display = 'block';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const resData = await response.json();
+
+        if (!response.ok || !resData.success) {
+          throw new Error(resData.message || resData.detail || `Server returned status ${response.status}`);
+        }
+
+        renderResult(resData.data);
+      } catch (err) {
+        showError(`Error: ${err.message}. Ensure FastAPI server is running on http://localhost:8000`);
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = 'Predict Heart Disease Risk';
+        btnSpinner.style.display = 'none';
+      }
+    }
+
+    function renderResult(data) {
+      document.getElementById('placeholder-state').style.display = 'none';
+      const content = document.getElementById('result-content');
+      content.style.display = 'flex';
+
+      const badge = document.getElementById('risk-badge');
+      const gauge = document.getElementById('probability-gauge');
+      const probNumber = document.getElementById('prob-number');
+      const detailOutcome = document.getElementById('detail-outcome');
+      const detailProb = document.getElementById('detail-prob');
+      const detailModel = document.getElementById('detail-model');
+
+      const percent = data.heart_disease_probability_percent !== undefined 
+        ? data.heart_disease_probability_percent 
+        : (data.probability * 100);
+
+      probNumber.textContent = `${percent.toFixed(1)}%`;
+      detailProb.textContent = data.probability.toFixed(4);
+      detailOutcome.textContent = data.has_heart_disease === 1 ? 'Positive Risk (1)' : 'Negative (0)';
+      detailModel.textContent = data.model_used || 'Random Forest';
+
+      badge.className = 'risk-badge';
+      let gaugeColor = 'var(--risk-low)';
+      
+      const riskLevel = (data.risk_level || 'Low').toLowerCase();
+      if (riskLevel === 'high' || percent >= 50) {
+        badge.textContent = 'High Risk';
+        badge.classList.add('risk-high');
+        gaugeColor = 'var(--risk-high)';
+      } else if (riskLevel === 'medium' || percent >= 30) {
+        badge.textContent = 'Moderate Risk';
+        badge.classList.add('risk-medium');
+        gaugeColor = 'var(--risk-medium)';
+      } else {
+        badge.textContent = 'Low Risk';
+        badge.classList.add('risk-low');
+        gaugeColor = 'var(--risk-low)';
+      }
+
+      gauge.style.setProperty('--gauge-color', gaugeColor);
+      gauge.style.setProperty('--gauge-percent', `${percent}%`);
+    }
+  </script>
+</body>
+</html>

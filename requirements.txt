@@ -1,0 +1,9 @@
+fastapi[standard]>=0.139.2
+uvicorn>=0.30.0
+pandas>=3.0.3
+pydantic>=2.13.4
+scikit-learn>=1.9.0
+joblib>=1.4.0
+matplotlib>=3.11.1
+seaborn>=0.13.2
+wandb>=0.28.1
