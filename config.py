@@ -26,3 +26,13 @@ APP_NAME = "Heart Disease Risk Prediction API"
 APP_VERSION = "1.0.0"
 HOST = "0.0.0.0"
 PORT = 8000
+
+# WandB Registry & Environment Settings
+SCRIPT_ENV = "dev"  # Can be dev, ci, or prod
+WANDB_ENTITY = "aithreads24"
+WANDB_PROJECT = "Threads"
+WANDB_REGISTRY = "wandb-registry-dataset"
+WANDB_GOLDEN_DATASET = "golden-dataset"
+WANDB_MICRO_DATASET = "micro-ci-pytest-dataset"
+WANDB_RAW_DATASET = "raw-dataset"
+

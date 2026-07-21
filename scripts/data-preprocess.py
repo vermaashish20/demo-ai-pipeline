@@ -3,8 +3,17 @@ import os
 from pathlib import Path
 import pandas as pd
 import joblib
+import wandb
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
+
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from config import (
+    WANDB_ENTITY, WANDB_PROJECT, WANDB_REGISTRY, 
+    WANDB_GOLDEN_DATASET, WANDB_MICRO_DATASET
+)
+
 
 # Paths configuration
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,8 +86,28 @@ Examples:
 
     input_path, output_path = get_env_paths(args.env, args.input_file, args.output_file)
 
-    if not input_path.exists():
-        raise FileNotFoundError(f"Input file not found at: {input_path}")
+    env_name = args.env.lower()
+    if env_name in ("ci-branch", "micro"):
+        print("CI environment detected. Pulling micro dataset from WandB Registry...")
+        run = wandb.init(project=WANDB_PROJECT, entity=WANDB_ENTITY, job_type="preprocess")
+        artifact_path = f"{WANDB_ENTITY}/{WANDB_REGISTRY}/{WANDB_MICRO_DATASET}:production"
+        artifact = run.use_artifact(artifact_path)
+        download_dir = artifact.download()
+        csv_files = list(Path(download_dir).glob("*.csv"))
+        input_path = csv_files[0] if csv_files else input_path
+        run.finish()
+    elif env_name in ("ci-prod", "golden"):
+        print("Prod environment detected. Pulling golden dataset from WandB Registry...")
+        run = wandb.init(project=WANDB_PROJECT, entity=WANDB_ENTITY, job_type="preprocess")
+        artifact_path = f"{WANDB_ENTITY}/{WANDB_REGISTRY}/{WANDB_GOLDEN_DATASET}:production"
+        artifact = run.use_artifact(artifact_path)
+        download_dir = artifact.download()
+        csv_files = list(Path(download_dir).glob("*.csv"))
+        input_path = csv_files[0] if csv_files else input_path
+        run.finish()
+    else:
+        if not input_path.exists():
+            raise FileNotFoundError(f"Input file not found at: {input_path}")
 
     # Ensure output directories exist
     output_path.parent.mkdir(parents=True, exist_ok=True)
