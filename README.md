@@ -180,14 +180,42 @@ python scripts/training.py --env ci-prod --wandb=true
 
 ## Running the Web App & API
 
-Start the FastAPI server:
-```bash
-uvicorn app.main:app --reload --port 8000
-```
+To run the FastAPI server and UI, follow these steps:
 
-- **Web UI**: [http://localhost:8000](http://localhost:8000)
-- **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+1. **Create the environment using `uv`**:
+   ```bash
+   uv sync
+   ```
+
+2. **Activate the virtual environment**:
+   - On **Windows**:
+     ```bash
+     .venv\Scripts\activate
+     ```
+   - On **macOS/Linux**:
+     ```bash
+     source .venv/bin/activate
+     ```
+
+3. **Run the FastAPI backend**:
+   ```bash
+   python -m app.main
+   ```
+
+4. **Verify the server**:
+   - Open [http://localhost:8000/](http://localhost:8000/) in your browser.
+
+5. **API Swagger Docs**:
+   - View interactive documentation at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+6. **Web UI Interface**:
+   - Open `index.html` at the root directory using any live-server extension or directly in a web browser.
+
+7. **Demo Prefilled Data**:
+   - Click the "Low Risk" or "High Risk" button in the right corner of the UI to auto-fill the form with sample data.
+
+8. **Predict**:
+   - Click the **Predict** button to view risk analysis results.
 
 ---
 
@@ -209,7 +237,7 @@ pytest
 
 ---
 
-## Docker
+## FastAPI Server as Docker Container
 
 ```bash
 docker build -t heart-disease-api .
