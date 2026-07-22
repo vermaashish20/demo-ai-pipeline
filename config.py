@@ -27,12 +27,19 @@ APP_VERSION = "1.0.0"
 HOST = "0.0.0.0"
 PORT = 8000
 
+#==== WANDB Configs
 # WandB Registry & Environment Settings
 SCRIPT_ENV = "dev"  # Can be dev, ci, or prod
-WANDB_ENTITY = "aithreads24"
-WANDB_PROJECT = "Threads"
-WANDB_REGISTRY = "wandb-registry-dataset"
-WANDB_GOLDEN_DATASET = "golden-dataset"
-WANDB_MICRO_DATASET = "micro-ci-pytest-dataset"
-WANDB_RAW_DATASET = "raw-dataset"
+WANDB_ENTITY = "mahtech"  # team name of wandb 
+WANDB_PROJECT = "mtech-demo-experiments"
+WANDB_PREFIX = "wandb-registry"
+# Dataset Registry and Collection
+WANDB_REGISTRY_DATASET = f"{WANDB_PREFIX}-dataset"
+WANDB_COLLECTION_GOLDEN_DATASET = "golden-dataset"
+WANDB_COLLECTION_MICRO_DATASET = "micro-ci-pytest-dataset"
+WANDB_COLLECTION_RAW_DATASET = "raw-dataset"
+# Model Registry and collection
+WANDB_REGISTRY_MODEL = f"{WANDB_PREFIX}-model"
+WANDB_COLLECTION_MODEL = "heart-risk"
+WANDB_COLLECTION_PROCESSOR = "heart-risk-processor"
 
